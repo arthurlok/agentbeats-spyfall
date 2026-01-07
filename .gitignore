@@ -12,3 +12,6 @@ wheels/
 
 # Virtual environments
 .venv
+
+# LLM code review comments
+CODE_REVIEW.md
