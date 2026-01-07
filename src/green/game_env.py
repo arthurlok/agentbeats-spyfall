@@ -96,7 +96,24 @@ Guess Location:
 
 
 def parse_action(response: str, is_spy: bool) -> dict | None:
-    """Parse and validate JSON action from agent response."""
+    """
+    Parse and validate JSON action from agent response.
+    
+    Agents must respond with valid JSON during action phases. This function extracts
+    and validates the action according to the agent's role (spy vs non-spy).
+    
+    Args:
+        response: The raw response text from the agent
+        is_spy: Whether the responding agent is a spy or non-spy
+        
+    Returns:
+        Validated action dictionary, or None if parsing/validation fails
+        
+    Note:
+        - Spy can perform: ask_question or guess_location
+        - Non-spy can only perform: ask_question
+        - Invalid actions are logged as warnings and return None
+    """
     try:
         # Try to extract JSON from response
         action_dict = json.loads(response)
@@ -120,8 +137,27 @@ def parse_action(response: str, is_spy: bool) -> dict | None:
         return None
 
 class SpyfallEnv:
+    """
+    Orchestrates a game of Spyfall between multiple agents.
+    
+    Game Flow:
+    1. Initialize: Send role information and game rules to all agents
+    2. Action Rounds: Each round, players take turns asking questions or making guesses
+    3. End Game: After max_rounds or when spy guesses, conduct voting to determine winner
+    
+    The environment maintains the game state and coordinates communication between
+    the green agent (orchestrator) and white agents (players) via the A2A protocol.
+    """
 
     def __init__(self, participants: dict[str, HttpUrl], location: str, max_rounds: int = 5):
+        """
+        Initialize the Spyfall game environment.
+        
+        Args:
+            participants: Dict mapping player names to their A2A endpoint URLs
+            location: The secret location for this game
+            max_rounds: Maximum number of rounds before voting (default: 5)
+        """
         self.participants = participants # name -> agent URL
         self.location = location
         self.round = 0

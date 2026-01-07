@@ -12,17 +12,24 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("green_agent")
 
 class EvalRequest(BaseModel):
-    """Request format sent by the AgentBeats platform to green agents."""
-    participants: dict[str, HttpUrl] # role -> agent URL
+    """
+    Request format sent by the AgentBeats platform to green agents.
+    
+    Attributes:
+        participants: Mapping of player names to their A2A agent endpoint URLs
+        config: Game configuration containing location and num_rounds
+    """
+    participants: dict[str, HttpUrl] # name -> agent URL
     config: dict[str, Any]
 
-# A2A participants message structure
-# {
-#     "participants": { "<name>": "<endpoint_url>" },
-#     "config": {}
-# }
 
 class Agent:
+    """
+    Green agent that orchestrates a Spyfall game.
+    
+    This agent receives a request with participant URLs and game configuration,
+    then uses the SpyfallEnv to coordinate the game between multiple purple agents.
+    """
     # Required configuration keys for a Spyfall game
     required_config_keys: list[str] = ["location", "num_rounds"]
 
@@ -30,7 +37,15 @@ class Agent:
         self.messenger = Messenger()
 
     def validate_request(self, request: EvalRequest) -> tuple[bool, str]:
-        """Validate that the request has all required configuration."""
+        """
+        Validate that the request has all required configuration.
+        
+        Args:
+            request: The evaluation request to validate
+            
+        Returns:
+            Tuple of (is_valid: bool, message: str)
+        """
         missing_config_keys = set(self.required_config_keys) - set(request.config.keys())
         if missing_config_keys:
             return False, f"Missing config keys: {missing_config_keys}"
@@ -38,11 +53,12 @@ class Agent:
         return True, "ok"
 
     async def run(self, message: Message, updater: TaskUpdater) -> None:
-        """Run a Spyfall game with the provided participants and configuration.
+        """
+        Run a Spyfall game with the provided participants and configuration.
 
         Args:
-            message: The incoming message containing participants and config
-            updater: Report progress (update_status) and results (add_artifact)
+            message: The incoming A2A message containing participants and config
+            updater: A2A task updater for reporting progress and results
         """
         input_text = get_message_text(message)
 
@@ -83,7 +99,8 @@ class Agent:
         )
 
     async def run_single_game(self, participants: dict[str, HttpUrl], location: str, num_rounds: int, updater: TaskUpdater) -> dict:
-        """Run a single game of Spyfall and return the results.
+        """
+        Run a single game of Spyfall and return the results.
         
         Args:
             participants: Dictionary mapping participant names to their agent URLs
@@ -94,16 +111,16 @@ class Agent:
         Returns:
             Dictionary containing game results
         """
-        # Create game environment
+        # Create game environment with the provided configuration
         game_env = SpyfallEnv(participants=participants, location=location, max_rounds=num_rounds)
         
-        # Assign roles
+        # Randomly assign one participant as spy, others as non-spies
         assigned_roles = game_env.assign_roles()
         spy_name = [name for name, role in assigned_roles.items() if role == "spy"][0]
         
         logger.info(f"Game started - Spy: {spy_name}, Location: {location}, Max Rounds: {num_rounds}")
         
-        # Run the game
+        # Run the game loop (initialization, action rounds, voting/end condition)
         game_result = await game_env.play_game(assigned_roles, location)
         
         logger.info(f"Game ended - Winner: {game_result['winner']}")
@@ -111,13 +128,14 @@ class Agent:
         return game_result
 
     def _format_game_result(self, game_result: dict) -> str:
-        """Format the game result into a readable string.
+        """
+        Format the game result into a readable string.
         
         Args:
             game_result: The game result dictionary
             
         Returns:
-            Formatted result string
+            Formatted result string for human readability
         """
         result_text = f"""
 Spyfall Game Results
