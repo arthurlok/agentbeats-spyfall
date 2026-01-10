@@ -1,5 +1,8 @@
 FROM ghcr.io/astral-sh/uv:python3.13-bookworm
 
+ARG ROLE
+ARG AGENT_MODEL
+
 RUN adduser agent
 USER agent
 WORKDIR /home/agent
@@ -10,6 +13,9 @@ COPY src src
 RUN \
     --mount=type=cache,target=/home/agent/.cache/uv,uid=1000 \
     uv sync --locked
+
+ENV ROLE=${ROLE}
+ENV AGENT_MODEL=${AGENT_MODEL}
 
 ENTRYPOINT ["uv", "run", "python", "-m", "src.main"]
 CMD ["--host", "0.0.0.0"]
