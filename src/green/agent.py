@@ -123,28 +123,35 @@ class Agent:
         # Run the game loop (initialization, action rounds, voting/end condition)
         game_result = await game_env.play_game(assigned_roles, location)
         
-        logger.info(f"Game ended - Winner: {game_result['winner']}")
+        spy = next((p for p in game_result['players'] if p['role'] == 'spy'), None)
+        winner_role = "spy" if spy and spy['won'] else "non-spies"
+        logger.info(f"Game ended - Winner: {winner_role}")
         
         return game_result
 
     def _format_game_result(self, game_result: dict) -> str:
         """
         Format the game result into a readable string.
-        
+
         Args:
             game_result: The game result dictionary
-            
+
         Returns:
             Formatted result string for human readability
         """
+        # Find spy and winners from players list
+        spy = next((p for p in game_result['players'] if p['role'] == 'spy'), None)
+        winners = [p['name'] for p in game_result['players'] if p['won']]
+        winner_role = "spy" if spy and spy['won'] else "non-spies"
+
         result_text = f"""
 Spyfall Game Results
 ===================
 
-Winner: {game_result['winner']}
+Winner: {winner_role} ({', '.join(winners)})
 End Method: {game_result['end_method']}
 
-Spy: {game_result['spy']}
+Spy: {spy['name'] if spy else 'Unknown'}
 Result: {game_result['result']}
 """
         if game_result['end_method'] == 'vote':
@@ -153,5 +160,5 @@ Voting Results:
 - Players voted for: {game_result['voted_as_spy']}
 - Vote breakdown: {game_result['votes']}
 """
-        
+
         return result_text

@@ -40,13 +40,13 @@ all_locations = [
 ]
 
 # Final results schema
-
+#
 # {
-#     "winner": "spy" or "non-spies",
-#     "winner_role": "spy" or "non-spy",
-#     "participants": [...],
 #     "end_method": "vote" or "spy_guess",
-#     "spy": <spy_name>,
+#     "players": [
+#         {"id": <agent_id>, "name": <player_name>, "role": "spy" or "non-spy", "won": true/false},
+#         ...
+#     ],
 #     "voted_as_spy": <name or None>,
 #     "votes": {...} or None,
 #     "result": <message>
@@ -283,16 +283,24 @@ Example of a valid response:
 Respond ONLY with valid JSON matching the schema above. Do not include any other text.
                         """
 
-    def _build_game_result(self, winner: str, spy_player: str, participants: list[str], 
-                           end_method: str, result_message: str, voted_as_spy: str = None, 
+    def _build_game_result(self, winner: str, spy_player: str, assigned_roles: dict[str, str],
+                           end_method: str, result_message: str, voted_as_spy: str = None,
                            votes: dict = None) -> dict:
         """Build the standardized game result dictionary."""
+        spy_won = winner == "spy"
+        players = []
+        for name, role in assigned_roles.items():
+            player_won = (role == "spy" and spy_won) or (role == "non-spy" and not spy_won)
+            players.append({
+                "id": str(self.participants[name]),
+                "name": name,
+                "role": role,
+                "won": player_won
+            })
+
         return {
-            "winner": winner,
-            "winner_role": "spy" if winner == "spy" else "non-spy",
-            "participants": participants,
             "end_method": end_method,
-            "spy": spy_player,
+            "players": players,
             "voted_as_spy": voted_as_spy,
             "votes": votes,
             "result": result_message
@@ -426,7 +434,7 @@ Respond with ONLY the name of the player you believe is the spy. Do not include 
         return self._build_game_result(
             winner=winner,
             spy_player=spy_player,
-            participants=list(self.participants.keys()),
+            assigned_roles=assigned_roles,
             end_method="vote",
             result_message=result_message,
             voted_as_spy=voted_as_spy,
@@ -458,7 +466,7 @@ Respond with ONLY the name of the player you believe is the spy. Do not include 
             return self._build_game_result(
                 winner="spy" if self.spy_win else "non-spies",
                 spy_player=spy_player,
-                participants=list(self.participants.keys()),
+                assigned_roles=assigned_roles,
                 end_method="spy_guess",
                 result_message=result_message
             )
