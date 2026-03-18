@@ -1,6 +1,6 @@
-# A2A Agent Template
+# Spyfall Green Agent Evaluator
 
-A minimal template for building [A2A (Agent-to-Agent)](https://a2a-protocol.org/latest/) green agents compatible with the [AgentBeats](https://agentbeats.dev) platform.
+An agent that orchestrates a game of spyfall - manages the turns in the game, ensures each player performs an action correctly each turn (if they're involved), and broadcasts any game updates to all players. Ultimately, records and reports who won the game and what their role was.
 
 ## Project Structure
 
