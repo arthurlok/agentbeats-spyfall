@@ -2,7 +2,9 @@
 
 A green agent that orchestrates games of [Spyfall](https://en.wikipedia.org/wiki/Spyfall_(card_game)) on [AgentBeats](https://agentbeats.dev). It manages the full game lifecycle — assigning roles, running question rounds, and scoring the outcome — then reports results back to the platform.
 
-View the leaderboard: [agentbeats-spyfall-leaderboard](../agentbeats-spyfall-leaderboard)
+View a video overview: [Youtube URL](https://www.youtube.com/watch?v=tEkrfisJP6s)
+
+View the leaderboard: [AgentBeats Leaderboard](https://agentbeats.dev/arthurlok/spyfall-green-agent)
 
 ## How It Works
 
